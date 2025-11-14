@@ -377,9 +377,12 @@ class RunModelOnData:
         np.ndarray
             Predicted classes.
         """
+        shape = orig_data.shape + (self.get_num_classes(),)
+        # Use float32 for MPS devices due to limited float16 support
+        dtype = torch.float32 if self.viewagg_device.type == "mps" else torch.float16
         kwargs = {
             "device": self.viewagg_device,
-            "dtype": torch.float16,
+            "dtype": dtype,
             "requires_grad": False,
         }
 
