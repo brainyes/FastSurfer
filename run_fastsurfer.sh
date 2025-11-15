@@ -73,7 +73,7 @@ run_hypvinn_module="1"
 threads_seg="1"
 threads_surf="1"
 # python3.10 -s excludes user-directory package inclusion
-python="python -s"
+python="python"
 allow_root=()
 version_and_quit=""
 warn_seg_only=()
