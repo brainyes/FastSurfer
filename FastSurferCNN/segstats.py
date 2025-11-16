@@ -2327,8 +2327,19 @@ def pv_calc_patch(
               p.stop - gc.start)
         for p, gc in zip(slicer_patch, global_crop, strict=False))
 
-    label_lookup = np.unique(seg[slicer_small_patch])
-    maxlabels = label_lookup[-1] + 1
+    # Cast to a wider integer to avoid uint8 overflow (e.g. label 255 + 1 -> 0).
+    label_lookup = np.unique(seg[slicer_small_patch]).astype(np.int64, copy=False)
+    if label_lookup.size == 0:
+        # Skip empty patches with no labels - this can happen with edge patches or areas with no segmentation
+        import warnings
+        warnings.warn(
+            f"Empty patch encountered at slice {slicer_patch} with no labels. "
+            f"This is usually harmless and occurs at image boundaries.",
+            RuntimeWarning,
+            stacklevel=2
+        )
+        return {}
+    maxlabels = int(label_lookup[-1]) + 1
     if maxlabels > 100_000:
         raise RuntimeError("Maximum number of labels above 100000!")
     # create a view for the current patch border

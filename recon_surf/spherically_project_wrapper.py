@@ -15,7 +15,7 @@
 
 # IMPORTS
 import argparse
-from os import umask
+import os
 from subprocess import PIPE, Popen
 from typing import Any
 
@@ -109,6 +109,14 @@ def spherical_wrapper(command1: list[str], command2: list[str], **kwargs: Any) -
     return code_1
 
 
+
+def _read_process_umask() -> int:
+    """Return current process umask without permanently changing it."""
+    current_umask = os.umask(0)
+    os.umask(current_umask)
+    return current_umask
+
+
 if __name__ == "__main__":
 
     opts = setup_options()
@@ -123,20 +131,18 @@ if __name__ == "__main__":
     if opts.threads > 1:
         threading = ("-threads", str(opts.threads), "-itkthreads", str(opts.threads))
 
-    # get the umask (for some reason this can only be returned if it is also set, so we set it to 2 just to get the
-    # current value)
-    umask = umask(_umask := umask(0o02))
+    # Retrieve current process umask so recon-all fallback uses the same octal value.
+    current_umask = _read_process_umask()
     cmd2 = [
         "recon-all",
         "-s", opts.subject,
         "-hemi", opts.hemi,
         "-qsphere",
         "-no-isrunning",
-        "-umask", str(_umask),
+        "-umask", f"{current_umask:04o}",
         *threading,
     ]
     # make sure the process has a username, so nibabel does not crash in write_geometry
-    from os import environ
-    env = dict(environ)
+    env = dict(os.environ)
     env.setdefault("USERNAME", "UNKNOWN")
     spherical_wrapper(cmd1, cmd2, env=env)
