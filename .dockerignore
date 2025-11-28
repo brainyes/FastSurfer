@@ -1,6 +1,6 @@
 **/.git
 **/.github
-checkpoints
+# checkpoints # now we want checkpoints inside the Dockerfile so we don't have to download them in every container task
 Singularity
 doc
 test
